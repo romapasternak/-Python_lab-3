@@ -1,0 +1,13 @@
+al = ' abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz'
+inp = input()
+key = int(3)
+inp_low = inp.lower()
+res = ''
+for shfr in inp_low:
+    poz = al.find(shfr)
+    new_poz = poz + key
+    if shfr in al:
+        res = res + al[new_poz]
+    else:
+        res = inp + shfr
+print(res)
