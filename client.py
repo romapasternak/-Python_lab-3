@@ -53,13 +53,17 @@ while shutdown == False:
     else:
         try:
             message = input()
-
-            # Begin
-            crypt = ""
-            for i in message:
-                crypt += chr(ord(i) ^ key)
-            message = crypt
-            # End
+            al = ' abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz'
+            key = int(3)
+            inp_low = message.lower()
+            res = ''
+            for shfr in inp_low:
+                poz = al.find(shfr)
+                new_poz = poz + key
+                if shfr in al:
+                    res = res + al[new_poz]
+                else:
+                    res = message + shfr
 
             if message != "":
                 s.sendto(("[" + alias + "] :: " + message).encode("utf-8"), server)
@@ -68,6 +72,5 @@ while shutdown == False:
         except:
             s.sendto(("[" + alias + "] <= left chat ").encode("utf-8"), server)
             shutdown = True
-
 rT.join()
 s.close()
