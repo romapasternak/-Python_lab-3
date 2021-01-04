@@ -1,47 +1,32 @@
-import socket
-import _thread
+import socket, time
+SERVER_ADDRESS = ('localhost', 8125)
+host = socket.gethostbyname(socket.gethostname())
 
+clients = []
 
-def main():
-	host = '0.0.0.0'
-	port = 5555
-	users = 4
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.bind(SERVER_ADDRESS)
 
-	s = socket.socket()
-	s.bind((host, port))
-	s.listen(users)
-	print('Listening for connections')
+quit = False
+print("[ Server Started ]")
 
-	conns = []
-	connecting = False
+while not quit:
+    try:
+        data, addr = s.recvfrom(1024)
 
-	def connUsers():
-		for user in range(users):
-			conn, addr = s.accept()
-			conns.append(conn)
-			connecting = True
-			print(addr, 'connected')
-			for each in range(len(conns)):
-				_thread.start_new_thread(sendData, (each, ))
-			connecting = False
-			_thread.start_new_thread(connUsers, ())
+        if addr not in clients:
+            clients.append(addr)
 
-	def sendData(user):
-		while True:
-			data = conns[user].recv(1024).decode('utf-8')
-			for each in range(len(conns)):
-				conns[each].send((data).encode('utf-8'))
-			if not data or connecting:
-				break
-		print('Closing connections')
-		s.close()
+        itsatime = time.strftime("%Y-%m-%d-%H.%M.%S", time.localtime())
 
+        print("[" + addr[0] + "]=[" + str(addr[1]) + "]=[" + itsatime + "]/", end="")
+        print(data.decode("utf-8"))
 
-	_thread.start_new_thread(connUsers, ())
+        for client in clients:
+            if addr != client:
+                s.sendto(data, client)
+    except:
+        print("\n[ Server Stopped ]")
+        quit = True
 
-	while True:
-		pass
-
-
-if __name__ == '__main__':
-	main()
+s.close()
