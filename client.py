@@ -1,66 +1,73 @@
-import socket
-import _thread
-import os
+import socket, threading, time
 
-os.system('')
+key = 8125
 
-def main():
-	host = '127.0.0.1'
-	port = 5555
+shutdown = False
+join = False
 
-	for x in range(70):
-		print('')
 
-	try:
-		file = open('config.txt', 'r+')
-		write = False
-	except:
-		file = open('config.txt', 'w')
-		write = True
+def receving(name, sock):
+    while not shutdown:
+        try:
+            while True:
+                data, addr = sock.recvfrom(1024)
+                # print(data.decode("utf-8"))
 
-	if not write:
-		lines = file.readlines()
-		un = lines[0][:-1]
-		colour = lines[1]
-	else:
-		un = input('\033[2;32;40mPlease pick a username:\033[0m ')
-		file.write(un + '\n')
-		while True:
-			try:
-				print("""Pick a colour:
-\033[1;30;40m30 - Black
-\033[1;31;40m31 - Red
-\033[1;32;40m32 - Green
-\033[1;33;40m33 - Yellow
-\033[1;34;40m34 - Blue
-\033[1;35;40m35 - Purple
-\033[1;36;40m36 - Cyan
-\033[1;37;40m37 - White\033[0m""")
-				colour = int(input())
-				if colour:
-					break
-			except:
-				print('\033[2;31;40mERROR: Colour must be an integer between 30 and 37\033[0m')
-		file.write(str(colour))
-	file.close()
+                # Begin
+                decrypt = "";
+                k = False
+                for i in data.decode("utf-8"):
+                    if i == ":":
+                        k = True
+                        decrypt += i
+                    elif k == False or i == " ":
+                        decrypt += i
+                    else:
+                        decrypt += chr(ord(i) ^ key)
+                print(decrypt)
+                # End
 
-	s = socket.socket()
-	s.connect((host, port))
+                time.sleep(0.2)
+        except:
+            pass
 
-	def getMessages():
-		while True:
-			data = s.recv(1024).decode('utf-8')
-			print(data)
-	def sendMessage():
-		while True:
-			msg = input()
-			s.send(('\033[1;' + str(colour) + ';40m' + un + ':\033[0m '  + msg).encode('utf-8'))
 
-	_thread.start_new_thread(getMessages, ())
-	_thread.start_new_thread(sendMessage, ())
+host = socket.gethostbyname(socket.gethostname())
+port = 0
 
-	while True:
-		pass
+server = ('localhost', 8125)
 
-if __name__ == "__main__":
-	main()
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.bind((host, port))
+s.setblocking (0)
+
+alias = input("Name: ")
+
+rT = threading.Thread(target=receving, args=("RecvThread", s))
+rT.start()
+
+while shutdown == False:
+    if join == False:
+        s.sendto(("[" + alias + "] => join chat ").encode("utf-8"), server)
+        join = True
+    else:
+        try:
+            message = input()
+
+            # Begin
+            crypt = ""
+            for i in message:
+                crypt += chr(ord(i) ^ key)
+            message = crypt
+            # End
+
+            if message != "":
+                s.sendto(("[" + alias + "] :: " + message).encode("utf-8"), server)
+
+            time.sleep(0.2)
+        except:
+            s.sendto(("[" + alias + "] <= left chat ").encode("utf-8"), server)
+            shutdown = True
+
+rT.join()
+s.close()
